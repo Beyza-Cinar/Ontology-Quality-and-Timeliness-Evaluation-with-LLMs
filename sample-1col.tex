@@ -1,0 +1,552 @@
+%% The first command in your LaTeX source must be the \documentclass command.
+%%
+%% Options:
+%% twocolumn : Two column layout. Do not use twocolumn for papers submitted to CEUR-WS!
+%% hf: enable header and footer.
+\documentclass[
+% twocolumn,
+% hf,
+]{ceurart}
+
+%%
+%% One can fix some overfulls
+\sloppy
+
+%%
+%% Minted listings support 
+%% Need pygment <http://pygments.org/> <http://pypi.python.org/pypi/Pygments>
+\usepackage{listings}
+\usepackage{tabularx}
+%% auto break lines
+\lstset{breaklines=true}
+
+%%
+%% end of the preamble, start of the body of the document source.
+\begin{document}
+
+%%
+%% Rights management information.
+%% CC-BY is default license.
+\copyrightyear{2026}
+\copyrightclause{Copyright for this paper by its authors.
+  Use permitted under Creative Commons License Attribution 4.0
+  International (CC BY 4.0).}
+
+%%
+%% This command is for the conference information
+\conference{17th Workshop on Ontology Design and Patterns (WOP 2026), 25th International Semantic Web Conference (ISWC 2026), Oktober 25--29, 2026, Bari, Italy}
+%%
+%% The "title" command
+\title{Evaluating Ontology Quality and Timeliness with Large Language Models}
+
+%\tnotemark[1]
+%\tnotetext[1]{You can use this document as the template for preparing your   publication. We recommend using the latest version of the ceurart style.}
+
+%%
+%% The "author" command and its associated commands are used to define
+%% the authors and their affiliations.
+\author[1]{Beyza Cinar}[%
+orcid= 0009-0006-3617-0134,
+email=cinarb@hsu-hh.de,
+url=https://www.hsu-hh.de/dataeng/en/team/beyza-cinar/,
+]
+\cormark[1]
+%\fnmark[1]
+\address[1]{Professorship of Data Engineering, Helmut Schmidt University, Holstenhofweg 85, 22043 Hamburg, Germany}
+
+\author[1]{Maria Maleshkova}[%
+orcid= 0000-0003-3458-4748,
+email=maleshkm@hsu-hh.de,
+url=https://www.hsu-hh.de/dataeng/en/team/maria-maleshkova/,
+]%\fnmark[1]
+
+%% Footnotes
+\cortext[1]{Corresponding author.}
+%\fntext[1]{These authors contributed equally.}
+
+%%
+%% The abstract is a short summary of the work to be presented in the
+%% article.
+\begin{abstract}
+Ontology development commonly relies on reusing existing ontologies, making continuous life-cycle management essential to maintain their relevance. This is particularly critical in healthcare, where guidelines and standards evolve rapidly, causing unmaintained ontologies to become outdated. However, this process requires time-consuming manual human effort. To address this challenge, we use large language models (LLMs) for ontology quality assessment, flaw detection, and identification of outdated standards and terminology. Our methodology integrates LLMs with established ontology evaluation tools, such as OOPS! and ROBOT, to enable both comparative assessment and the enhancement of tool-based evaluation. The LLM-based framework is demonstrated using FASTO, one of the most comprehensive ontologies for type 1 diabetes (T1D) management, published in 2018. Since its publication, FASTO has not been updated, which may have led to outdated terminology, standards, and reused resources. In particular, the LLM-based evaluation investigates: 1) general ontology design flaws, 2) ontology reuse and namespace issues, 3) outdated entities in the FHIR namespace, and 4) the timeliness scope of the ontology by generating new competency questions based on recent literature. The aim is to improve the ontology quality by targeted updates. The results show that LLMs can be used reliably for tasks 1, 2, and 4, whereas task 3 generates findings with decreased LLM-reported confidence. In particular, the LLM can identify more issues than established tools and can confidently identify gaps in domain coverage if sufficient input is provided. Conclusively, LLM-generated evaluation provides a solid baseline to guide ontology improvement, revision, and updates. 
+\end{abstract}
+
+%%
+%% Keywords. The author(s) should pick words that accurately describe
+%% the work being presented. Separate the keywords with commas.
+\begin{keywords}
+Large Language Models \sep
+Ontology Evaluation \sep
+Ontology Quality Improvement \sep
+Ontology Validation \sep
+Ontology Verification
+\end{keywords}
+
+%%
+%% This command processes the author and affiliation and title
+%% information and builds the first part of the formatted document.
+\maketitle
+
+\section{Introduction}
+Large Language Models (LLMs) are increasingly applied across a variety of domains that traditionally relied on time-consuming manual human effort \cite{Li2025,li2025large,Tsaneva2024}. Within the Semantic Web Community, recent studies have explored their potential in ontology engineering and ontology design patterns \cite{li2025large}. These applications suggest that LLMs can effectively support ontology creation and ontology evaluation, particularly where expert-intensive involvement is required \cite{li2025large,Tsaneva2024}. 
+
+Ontology engineering comprises several life-cycle phases, such as ontology pre-development specification (e.g., requirement analysis, ontological analysis, ontology design, system design), ontology implementation (e.g., ontology development and reuse, system development and integration, deployment), ontology evaluation, and ontology maintenance \cite{Wilson2022, li2025large}. Although LLMs have already been investigated for ontology creation, their roles in ontology reuse, evaluation, and life-cycle management remain underexplored \cite{Tsaneva2024}. In particular, a systematic ontology quality assurance remains a research gap and is challenging in practice \cite{Sowiski2022}. Since each phase involves distinct quality requirements, ontology quality must be assessed considering the specific task and life-cycle phase \cite{Wilson2022}. 
+
+Ontology evaluation verifies domain accuracy with the required criteria \cite{Sammi2025}. Evaluation is differentiated between verification and validation. Verification examines whether an ontology conforms to formal rules, language constraints, and design patterns. Validation assesses whether the intended domain needs are covered, often using competency questions (CQs) formulated as SPARQL queries~\cite{Sammi2025,PovedaVillaln2012OOPS,Lippolis2025, burbach2025aiship}. 
+
+Ontology maintenance and life-cycle management are other essential phases in ontology engineering, especially when the ontology is reused by the community. Ontologies can be reused through complete imports, partial imports, fixed-version reuse, and cross-ontology references \cite{Sowiski2022,Halper2023}. Depending on the use case, importing only the required sub-ontology is suggested \cite{Halper2023}. Ontology reuse is a key design principle in ontology development, but it introduces maintenance challenges, as uncontrolled imports or poorly governed reuse can lead to erroneous concepts, properties, or dependencies \cite{Halper2023}. Notably, the joint reuse of multiple ontologies is challenging, particularly in the healthcare domain, where concepts and terminologies are frequently updated \cite{Sowiski2022, Bernab2023}. Comprehensive reviews further report that the timeliness of ontologies in ontology quality assessment is rarely addressed \cite{Wilson2022}. 
+
+Hence, ontologies require continuous maintenance and alignment with current standards such as the FAIR (Findability, Accessibility, Interoperability, Reusability) principles. To improve data management and reuse, the guidelines define the requirements for rich, indexed metadata and a unique identifier, as well as the ability to retrieve data using standardized methods and to integrate data across systems and domains. Reusability needs accurate attributes and provenance information \cite{tuozzo2026automated,Bernab2023}, as well as detailed documentations as in \cite{burbach2025aiship, Ivanovic2025SHIP, Doerner2026MQTT}.
+
+Building on this gap, this study evaluates whether LLMs can support the improvement of the FHIR- and SSN-based T1D Ontology (FASTO), an ontology published in 2018 \cite{ElSappagh2019_FASTO}. FASTO supports the diagnosis and management of type 1 diabetes (T1D) by enabling the generation of long-term and emergency personalized therapies. It reuses standard ontologies and terminologies, including the Basic Formal Ontology (BFO), the Semantic Sensor Network (SSN) ontology, Fast Healthcare Interoperability Resources (FHIR), and Systematized Nomenclature of Medicine Clinical Terms (SNOMED CT) \cite{ElSappagh2019_FASTO}. This study aims to assess whether LLMs can complement established evaluation methods or human expertise and contribute to continuous ontology life-cycle management. In particular, we investigate 1) general ontology design issues, 2) issues related to reused ontologies and namespaces, 3) the update requirements of reused resources, 4) the formulation of new competency questions, and the need for introducing new concepts into the ontology. Our contributions include evaluating FASTO using 1) established ontology tools like the Ontology Pitfall Scanner! (OOPS!) and ROBOT, 2) LLMs supplied with the ontology and related resources, such as the paper describing FASTO and the complete reused ontologies, and 3) a hybrid approach in which outputs from established tools are provided to the LLMs alongside the prompts and ontologies.
+
+The remainder of this paper is structured as follows. Section \ref{sec:stota} reviews established tools and related studies. Section \ref{sec:methods} presents the investigated ontology, the methodology, the tools used, and the prompts. Section \ref{sec:results} summarizes the results. Section \ref{sec:dis} discusses the findings, and section \ref{sec:conclusion} concludes the study.
+
+\section{Related Standards}
+\label{sec:stota}
+
+This section reviews established tools for ontology verification and validation, frequently identified flaws in biomedical ontologies, commonly used prompting strategies, and studies that apply LLMs to ontology quality assessment.
+
+\subsection{Established Tools for Ontology Evaluation}
+
+The Semantic Web Community already provides established tools to summarize and verify ontologies based on common design patterns and pitfalls. First, a structural overview of an ontology can be created using free tools such as OntoMetrics, assessing the counts of objects, their properties, class axioms, and annotations \cite{Sammi2025, Wilson2022}. Also, Python libraries (e.g., RDFLib) provide an initial analysis, detect parsing errors, and can be used for comparison with gold standards \cite{li2025large}. Other empirical frameworks include OQuaRE and OntoQA, offering methods for mapping quality characteristics to quantifiable metrics \cite{Sammi2025}. Then, advanced tools can provide further insight into the ontology quality. IRI\_Debug supports the validation of ontology IRIs against standard reference ontologies \cite{Sammi2025}. The semiotic correctness across syntactic, semantic, pragmatic, and social dimensions can be analyzed with OntoKeeper \cite{Sammi2025}.
+
+For detailed ontology verification, tools like OOPS! and ROBOT are presented. OOPS! is an online tool that detects common pitfalls based on a catalog of at least 29 pitfalls \cite{Sammi2025, PovedaVillaln2012OOPS, li2025large, Wilson2022,ElSappagh2019_FASTO}. The ontology evaluation dimensions include logical consistency, modeling issues, language specification, real-world representation, and human understanding \cite{PovedaVillaln2012OOPS}. Additionally, several tools, such as ROBOT and OBO Dashboard, were proposed to improve the creation and quality assessment of Open Biological and Biomedical Ontologies (OBO). ROBOT, available as an open-source library and command-line tool, can automate tasks related to ontology creation, including querying, verifying, reporting, and repairing \cite{Jackson2019ROBOT}. Its reasoner supports logical ontology validation, automatic classification, and namespace analysis \cite{Jackson2019ROBOT, Sowiski2022}. The OBO Dashboard assesses whether the ontology conforms to OBO Foundry principles \cite{Sowiski2022}.
+
+\subsection{Common Flaws in Biomedical Ontologies}
+
+Using established tools and domain knowledge, Sowinski et al. investigated the quality of OBO ontologies and reported that only 2 out of 30 examined ontologies had no issues \cite{Sowiski2022}. First, they identified that most ontologies need to be converted from the OBO format to the Web Ontology Language (OWL), even though their initial format is specified with the .owl extension. The most common error type was undefined properties in the "oboInOwl" namespace. Furthermore, issues in mistaken ontology prefixes, typos, and invalid URIs were found. Properties were often used inconsistently since their objects could be URIs or literals. Also, datatype mismatches were present in URI-typed values. Properties with conflicting usage patterns often lacked an rdfs:range property, had only a broadly specified range, or were not defined at all. Finally, inconsistencies in metadata properties were observed \cite{Sowiski2022}. These results indicate the challenge in reusing biomedical ontologies without controlled quality assessment. 
+
+\subsection{LLM Prompt Strategies}
+
+Studies applying LLMs to ontology engineering have evaluated a range of different models, revealing similar performance \cite{li2025large,Lippolis2025}. The most common models in ontology engineering are GPT, LLaMA, and T5 \cite{li2025large}. Regarding prompting techniques, several methods have been explored, including zero-shot, one-shot, few-shot, template-based, reasoning-driven prompting, iterative refinement, and fine-tuning \cite{li2025large}. Zero-shot prompting relies on a task description and enables models to generalize to unseen tasks. Example use cases include generating CQs or SPARQL queries and translating natural-language definitions into OWL axioms \cite{li2025large}. One-shot and few-shot prompting incorporate one or several demonstrations, respectively, to reduce hallucinations. These methods are often used for CQ generation, conceptualization, evaluation, and matching \cite{li2025large,Tsaneva2024}.
+
+
+\subsection{LLM Use for Flaw Detection}
+
+For ontology evaluation, proposed application areas using LLMs include evaluating syntax errors, converting CQ into SPARQL, automatically generating domain-specific CQs, and using LLMs to investigate the quality of ontologies on relevance, clarity, and depth \cite{li2025large,Lippolis2025}. In addition to identifying ontology issues, LLMs are also leveraged to recommend corrections. However, the maintenance and life-cycle management of ontologies remain underexplored \cite{li2025large}. 
+
+Wilson et al. present OntoClean, which investigates the taxonomic properties of an ontology \cite{Wilson2022}. Sammi et al. propose OntoInsight, a tool for ontology quality evaluation. It is guided by metrics and generates LLM-based recommendations \cite{Sammi2025}. Their approach combines empirical ontology measures with LLM-based generation to improve scalability and contextual relevance \cite{Sammi2025}. The system first converts the input ontology to a standardized OWL/XML format. Then, OWL Syntax is converted into Controlled Natural Language (CNL) to enhance interpretability and improve efficiency. CNL is a simplified, human-readable textual format used to improve clarity and reduce hallucination in prompts \cite{Sammi2025,Tsaneva2024}. Single, interconnected components cover the different aspects of ontology processing and analysis \cite{Sammi2025}. The LLM’s output is structured into required sections of overview, key strengths, areas for improvement, and simple recommendations \cite{Sammi2025}. 
+Similarly, Tsaneva et al. leverage LLMs to identify ontology verification restrictions using ChatGPT-4 and report that a natural language-based formalism is more efficient as input \cite{Tsaneva2024}. Their results show intermediate-to-expert scores on an ontology modeling qualification test. They first extract ontology axioms and translate them into different formats (e.g., VOWL, Turtle, natural language). Then, the axioms are verified using a few-shot approach. In addition, each axiom is verified in a single zero-shot prompt containing the context, the axiom model, and the verification question. Improved accuracy is reported by combining axioms represented in different formats \cite{Tsaneva2024}.
+Specifically, for ontology validation, Lippolis et al. propose OE-Assist, a framework automating targeted ontology evaluation via CQ verification and providing LLM-based suggestions \cite{Lippolis2025}. Their method uses a prompt that describes the ontology-evaluation task, gives some examples in a few-shot style, includes the user story, the CQ, and the ontology. The prompt asks the model to assess whether the CQ is correctly modeled via a boolean label, and to generate a SPARQL query to verify the CQ~\cite{Lippolis2025}. 
+
+Conclusively, most studies assess the quality of the ontology and already apply LLMs to generate structured recommendations and targeted improvement. However, the life-cycle management automation via LLMs remains immature. In particular, most studies do not address the updating of unmaintained ontologies and reused standards, or the timeliness coverage of current domain needs. 
+
+
+\section{Methodology}
+\label{sec:methods}
+
+We present an LLM-based framework for ontology verification and validation and compare its results with those of established ontology evaluation tools. We further investigate how LLMs can enhance tool-based evaluation by using their outputs as model inputs alongside the ontology file. The objective is to assess ontology quality and support its improvement toward alignment with the FAIR principles. This work represents a first step toward agentic systems for closed-loop ontology life-cycle management, particularly regarding timeliness, remaining an open research gap \cite{li2025large}. We aim to provide a foundational component for automated quality evaluation and flaw detection, which could provide recommendations and solutions, or update ontologies autonomously under expert verification~\cite{Wilson2022}.
+
+The LLM-based framework is applied to the FASTO ontology \cite{ElSappagh2019_FASTO}, a T1D ontology published in 2018 that has not been updated since. We examine flaws in design patterns and the status of reused ontologies. The framework first identifies pitfalls and design errors, then analyzes import-related problems, including namespace misuse. Third, outdated entities requiring correction due to changes in reused ontologies are detected using LLMs, without input from established tools. Finally, new CQs are formulated to assess whether the ontology reflects current knowledge of T1D management and therapy. Likewise, the CQs are not evaluated against established tools. Instead, they are generated using recent papers, the ontology itself, and the previously used CQs. 
+
+This section reports FASTO, the established tools used, and the prompt technique for each task. 
+
+\subsection{FASTO and Its Reused Ontologies}  
+
+We analyze the quality of the FASTO ontology, which was created to improve a clinical decision support system for the management of T1D. T1D is an autoimmune disease, requiring lifelong insulin therapy and glucose management to avoid severe events of high (hyperglycemia) and low (hypoglycemia) blood glucose levels, which are impacted by comorbidities and medications \cite{elsayed_2_2023, ElSappagh2019_FASTO}. Thus, personalized insulin injections and therapies should be provided based on a patient's context and lifestyle, rather than relying solely on blood glucose levels \cite{Cinar2026Twins}. The authors combine the analysis of wearables, EHRs, and log data, grounded in ontology knowledge, to automate monitoring and decision support and recommend customized treatment plans. FASTO incorporates 9577 classes, 658 object properties, 164 data properties, 460 individuals, and 140 SWRL rules \cite{ElSappagh2019_FASTO}. 
+
+FASTO is an OWL 2 ontology that is based on BFO 2.0 as its upper-level foundation \cite{ElSappagh2019_FASTO}. FASTO reused standard ontologies and terminology to comply with OBO and medical standards. For instance, the HL7 FHIR standard for data storage, communication, and knowledge representation enables interoperability between different data inputs. From the FHIR model, basic clinical content, including medications, care plans, and observations, was extracted. The medical terms were then encoded with standard medical terminologies (e.g., SNOMED CT). They also implemented knowledge of clinical practice guidelines as OWL 2 axioms and SWRL rules. Previously developed ontologies for type 2 diabetes were reused to define elements required to represent T1D treatment (e.g., diabetes diagnosis (DDO) and treatment (DMTO)) \cite{ElSappagh2019_FASTO}. The DDO also reused standard ontologies, including DOID, the ontology of glucose metabolism disorder (OGMD), and the symptom ontology (SYMP) \cite{ElSappagh2016_DDO}. Further reused ontologies are listed in Appendix \ref{app_reusedont}. Additional T1D treatment knowledge was incorporated as relations, properties, axioms, and SWRL rules. To represent wearable data, each patient has a wireless body area network (WBAN). From the SSN ontology, relevant classes were identified and mapped to BFO universals. The temporal dimension of WBANs was modeled using the SWRL Temporal Ontology (SWRL TO), while SSN was extended with knowledge from the SmartBAN ontology. Then, data integration relied on the SSN and vital-sign ontologies. SSN is a general OWL 2-based sensor ontology and uses the Sensor Web Enablement (SWE) standard \cite{ElSappagh2019_FASTO}. 
+
+
+\subsection{Established Tools}
+
+For the quality assessment, the Protégé reasoner was first leveraged to inspect imports, reused namespaces, and inferred hierarchy. ELK executed the reasoning but reported incomplete ontology satisfiability and 20 incompleteness problem types, while HermiT could not complete reasoning. Then, OOPS! detected common pitfalls. In addition, ROBOT investigated the namespaces used, identified the imported ontologies, and reasoned over the classes and axioms for module extraction. Also, ROBOT provided a report on common issues. Finally, the ontology was manually analyzed using RDFLib. 
+
+\subsection{LLM Use and Prompt Strategies}
+
+Following related work, we first converted the ontology to an .owl file \cite{Sowiski2022}. Then, it was translated into a structured language using the verbalizer of Minitour \cite{zaitoun2024_NLfromOWL}. We used non-interactive zero-shot prompting with a fixed JSON output schema to ensure comparable model outputs. The prompt and JSON templates were created with the assistance of ChatGPT, giving a full task description, intended analysis, and outcome requirements. The prompts were then reviewed, tested, and refined by the authors. To mitigate overfitting, refinements targeted general failures rather than FASTO-specific content (e.g., evidence verification or output grouping).
+The specific prompts and results of the ontology evaluation can be found in \href{https://github.com/Beyza-Cinar/LLM_Based_Ontology_Evaluation}{https://github.com/Beyza-Cinar/LLM\_Based\_Ontology\_Evaluation}. Because FASTO reuses several large standard ontologies, it exceeded the capacity of local LLMs (e.g., Llama 3.1 8b). To retain the complete ontology in a single prompt, the ChatGPT interface with GPT 5.5 High (Thinking Extended) was used. Each prompt started in a new chat with the instruction that no knowledge from memory or previous chats is allowed to be used. All tasks were performed between 19 and 24 July 2026. Further insights on the ChatGPT settings are provided in Appendix \ref{app_gpt}. 
+
+For the first task, the ontology (\href{https://bioportal.bioontology.org/ontologies/FASTO}{https://bioportal.bioontology.org/ontologies/FASTO}) and verbalizer were provided as evidence. The second task also incorporated the paper describing the FASTO ontology \cite{ElSappagh2019_FASTO}, as well as the ontology files of FHIR Release 3 (R3) (\href{https://www.hl7.org/fhir/STU3/rdf.html}{https://www.hl7.org/fhir/STU3/rdf.html}), SSN v3 (\href{https://www.w3.org/TR/vocab-ssn/}{https://www.w3.org/TR/vocab-ssn/}), DMTO (\href{https://bioportal.bioontology.org/ontologies/DMTO}{https://bioportal.bioontology.org/ontologies/DMTO}), and OntoFood (\href{https://bioportal.bioontology.org/ontologies/OF}{https://bioportal.bioontology.org/ontologies/OF}). For the third task, the FASTO ontology, the FASTO paper, the analysis on the FHIR namespace of task 2 using the LLM-based method, and FHIR R5 (\href{https://hl7.org/fhir/R5/rdf.html} {https://hl7.org/fhir/R5/rdf.html}) were used. The CQs were generated given a set of 15 papers \cite{obesity2025, diabTech2025, preventionDelay2025, children2025, revision2025, olderadults2025, glycemicGoals2025, imporvingcare2025} that were selected after abstract screening using the keyword combination: "type 1 diabetes" AND ("treatment" OR "management") AND ("guideline" OR "standard" OR "update"). In addition, a search on hypoglycemia was conducted with the string: "type 1 diabetes" AND "hypoglycemia" AND ("guidelines" OR "treatment"). Both searches were restricted to Open Access publications published since 2024 \cite{glycemic2024, Sherr2026, Talbo2026, Singh2024, Lundemose2025, Zeng2025}. Also, guidelines from the Diabetes Journals were provided (\href{https://diabetesjournals.org/care/issue/49/Supplement_1}{https://diabetesjournals.org/care/issue/49/Supplement\_1}). Finally, the links used by FASTO to extract relevant information on diabetes treatment and guidelines were given \cite{ElSappagh2019_FASTO}, in addition to the ontology, the paper describing FASTO, and previous CQs. 
+
+For all tasks, the LLM provided confidence scores (0-1) to support hallucination assessment. These scores are not validated reliable metrics, but indicators of the model's own estimated confidence. 
+
+
+\section{Results}
+\label{sec:results}
+
+This section reports the quality and design issues of FASTO. First, common flaws were identified, followed by a more detailed analysis of the reused ontologies. Third, the LLM detected entities, classes, and axioms of FHIR, requiring updates. Other namespaces were not investigated since only FHIR was majorly updated from version 3 to 5. Lastly, the LLM generated new CQs using current guidelines on T1D management and hypoglycemia treatment, paying particular attention to age-based differences. El Sappagh et al. reported that immediate prevention of hypoglycemia could not be implemented, as no comprehensive literature existed at the time of the study \cite{ElSappagh2019_FASTO}. 
+
+\subsection{General Flaws in Ontology Design}
+Potential pitfalls and deviations from commonly accepted design principles were identified by conventional tools (e.g., OOPS! and ROBOT). Then, Chat-GPT 5.5 High generated a report on identified issues. Chat-GPT 5.5 Medium was also compared, but yielded only 8 findings, which were insufficient.  
+
+\begin{table} [t]
+    \centering
+    \caption{Pitfalls detected by OOPS!}
+    \label{tab:OOPS}
+    \begin{tabular}{lll} \toprule
+        Pitfall & Name & Severity \\
+\midrule
+        P04 & Creating unconnected ontology elements & Minor \\
+        P05 & Defining wrong inverse relationships  & Critical \\
+        P07 & Merging different concepts in the same class & Minor \\
+        P08-A & Missing annotations - Label & Minor \\
+        P11 & Missing domain or range in properties & Important \\
+        P12 & Equivalent properties not explicitly declared & Important \\
+        P13(-N,-S,-Y) &Inverse relationships not explicitly declared  & Minor \\
+        P20 & Misusing ontology annotations & Minor \\
+        P22 & Using different naming conventions in the ontology & Minor \\
+        P24 & Using recursive definitions & Important \\
+        P30 & Equivalent classes not explicitly declared  & Important \\
+        P32 & Several classes with the same label & Minor \\
+        P34 & Untyped class & Minor \\ \bottomrule
+    \end{tabular}
+\end{table}
+
+\begin{table} [t]
+    \centering
+    \caption{Flaws detected by ROBOT}
+    \label{tab:ROBOT}
+    \begin{tabular}{lllll} 
+    \toprule
+         Type & Flaw & Reused Ontologies & FASTO Entity & Total \\ 
+         \midrule
+         Error & Missing label & 3398 & 221 & 3619 \\
+         Error & Multiple labels & 41 & 0 & 41\\
+         Error & Duplicate label & 890 & 0 &  890\\
+         Error & Duplicate definitions & 0 & 10 & 10 \\
+         Error & Label whitespace & 10 & 0 &  10\\
+         Error & Label formatting & 8 & 0 & 8 \\
+         Error & Multiple definitions & 8 & 0 & 8 \\
+         Error & Missing ontology description & 0 & 1 & 1\\
+         Error & Missing ontology license & 0 & 1 & 1 \\
+         Error & Missing ontology title & 0 & 1& 1\\
+         
+         Warnings & Annotation whitespace & 299 & 0 & 229\\
+         Warnings & Duplicate exact synonym & 16 & 0& 16 \\
+         Warnings & Duplicate label synonym & 37 & 0& 37\\
+         Warnings & Missing definition & 12095 & 146& 12241\\
+         Warnings & Missing subset declaration & 28 & 0& 28\\
+         
+         Info &  Lowercase definition & 35 & 0& 35\\ 
+         \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsubsection{Established Tools}
+
+El-Sappagh et al. state that HermiT and OOPS! were used to evaluate FASTO, revealing no errors and pitfalls in 2018 \cite{ElSappagh2019_FASTO}. However, with the current versions, HermiT stopped the reasoner due to unsupported SWRL built-in atoms, while OOPS! detected 15 pitfalls, comprising 10 minor, 4 important, and 1 critical issue. A detailed overview is provided in Table \ref{tab:OOPS}. The most frequently reported problem concerned the reuse of identical labels, which occurred 181 times. Additional findings included 9 equivalent classes, 4 equivalent properties, and 2 relationships with missing defined inverse properties.
+
+Moreover, ROBOT and RDFLib identified 3 invalid integer literals, which should be corrected: pitavastatin, acute hepatic failure, and acute hepatitis B with hepatitis D. 
+
+The ROBOT report returned a total of 17245 findings, comprising 4589 errors, 12621 warnings, and 35 information. Because many findings concerned embedded reused ontologies, we filtered the report to FASTO entities, yielding 234 errors and 146 warnings. These include 221 missing labels, 146 missing definitions, and one missing ontology title, description, and license. All 16 flaw categories are presented in Table \ref{tab:ROBOT}. ROBOT further reveals that FASTO does not conform to OWL 2 DL, EL, RL, or QL profiles.
+
+After removing semantic equivalents, both reports detect a total of 27 flaw categories, while some issues remain similar across both methods.  
+
+
+\subsubsection{Using LLMs}
+
+We compared the use of LLMs in two modes. In the LLM-based mode, only the ontology was provided, whereas the LLM-enhanced mode was additionally informed by the results of established tools. The identified issues and the count of related entities, classes, or axioms are summarized in Table \ref{tab:llm-results}.
+
+\begin{table}[t]
+    \centering
+    \caption{Results using LLMs. The table shows the number of issues found per LLM method.}
+    \label{tab:llm-results}
+
+    \setlength{\tabcolsep}{1.5pt}
+    \renewcommand{\arraystretch}{0.72}
+
+    \begin{tabularx}{\columnwidth}{
+        >{\raggedright\arraybackslash}p{8.5cm}
+        >{\raggedright\arraybackslash}p{2cm}
+        >{\raggedright\arraybackslash}p{2cm}
+        >{\centering\arraybackslash}p{1cm}
+        >{\centering\arraybackslash}p{1cm}
+    }
+        \toprule
+        Flaw &
+        Scope &
+        Type &
+        LLM-based &
+        LLM-enhanced \\
+        \midrule
+
+        Data type misuse
+        & Reused & Error & 6 & 0 \\
+
+        Class-individual punning and self-instantiation
+        & FASTO, Reused & Warning & 17 & 0 \\ 
+
+        Duplicate class labels
+        & Reused & Warning & 424 & 0 \\
+
+        Label whitespace or formatting issues
+        & Reused & Warning & 10 & 0 \\
+
+        Misspelled or inconsistent entity names
+        & FASTO, Reused & Warning & 12 & 19 \\
+
+        Inconsistent ontology base and namespace strategy
+        & FASTO & Warning & 1 & 1 \\
+
+        Missing imports for referenced external ontologies
+        & FASTO & Warning & 1 & 1 \\
+
+        Domain terms in third-party namespaces
+        & Reused & Warning & 26 & 28 \\
+
+        Concrete case data mixed into the ontology
+        & FASTO, Reused & Warning & 117 & 14 \\
+
+        Parallel class and individual IRIs with identical local names
+        & Reused & Warning & 16 & 0 \\
+
+        Split root property hierarchy
+        & Reused & Warning & 6 & 0 \\
+
+        Properties lacking domain and range declarations
+        & FASTO, Reused & Warning & 34 & 0 \\
+
+        Potentially over-strong property characteristics
+        & Reused & Warning & 1 & 0 \\
+
+        Fragile local-name syntax in IRIs
+        & FASTO, Reused & Warning & 20 & 1 \\  
+        
+        Missing ontology-level metadata
+        & FASTO & Info & 1 & 0 \\
+
+        Missing human-readable labels on custom entities
+        & FASTO, Reused & Warning & 1695 & 0 \\
+
+        Fragmented namespace policy for conceptually related entities & Reused & Warning & 0  & 12 \\
+        
+        Class/individual punning with the same IRI&  Reused  &  Warning &  0 &  1 \\    
+
+        FHIR primitive value nodes without literal values & FASTO, Reused & Warning  &  0 & 11 \\
+
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+The LLM-based approach identified 16 flaws, while the LLM-enhanced method reported 9. Of these findings, 4 were direct, 2 were partial overlaps, and 3 were unique enhancements. The LLM-based method detected several general ontology quality issues that were also reported by OOPS! and ROBOT. These included misuse of data types, duplicate class labels, formatting problems, missing property domains or ranges, and missing labels or definitions. As requested in the prompt, related occurrences were grouped into consolidated findings, and the affected entities were listed individually. In total, 11 important and 5 minor findings were reported, including 1 error, 14 warnings, and 1 information. Hence, most of the common pitfalls can be detected with a zero-shot prompt and the ontology as input. 
+
+The LLM-enhanced method detected 9 warnings, comprising 7 important and 2 minor findings. The LLM-enhanced method was designed not to repeat findings already addressed by OOPS! and ROBOT. The additional flaws focused more on issues related to namespace ownership, fragmented namespace policies, class-individual punning, or ontology-based mismatches. Consequently, additional flaws could be identified using the LLM-enhanced method, whereas with a simple zero-shot prompt and only the ontology as input, most common pitfalls were detected. 
+
+After accounting for overlapping and consolidated findings, both methods identified 19 distinct quality issues. Using only the LLM and ontology file, an average self-confidence score of 91\% is achieved, ranging from 72\% to 99\%. In contrast, the LLM-enhanced method has a lower confidence, ranging from 68\% to 95\%, with an average score of 83\%. But the approaches cannot be directly compared since the second method did not repeat flaws already detected by established tools. 
+
+
+\subsection{Issues with Reused Ontologies and Namespace Misuse}
+
+The previous task revealed that FASTO relies heavily on external ontologies and misuses their namespaces. Thus, the import method and the specific misuse are investigated in this subsection. 
+
+\subsubsection{General Overview Provided by ROBOT}
+
+Using SPARQL queries and ROBOT, at least 79 namespaces and 10370 external entities outside the FASTO namespace were detected, while those were not imported through owl:imports. 
+
+Also, 52 suspicious reused namespace links involving the DDO and DMTO entities were identified, in which external entities were modeled directly against FASTO entities. The DDO namespace could not be investigated further since the ontology is not publicly available. Although El Sappagh et al. state that DMTO was reused, FASTO declares 1955 corresponding entities under the FTDM namespace \cite{ElSappagh2019_FASTO}. In total, 114 suspicious FTDM local-name patterns were detected. Comparison with DMTO showed that FASTO introduced 321 classes, 84 datatype properties, 69 object properties, and 220 individuals.
+
+FASTO uses 631 FHIR entities, of which 179 occur only in FASTO, including 117 classes, 43 object properties, 14 individuals, and 5 datatype properties. Moreover, 1735 axioms are present only in FASTO and not in FHIR. For the SSN namespace, 128 entities were identified in FASTO, while 488 axioms were newly introduced. Newly added entities include 76 classes, 24 object properties, 14 datatype properties, and 4 individuals. Lastly, for the OntoFood ontology, 302 axioms are present only in FASTO, although OntoFood was reused. Because the ontology was incorporated under a locally modified namespace, all 135 reused entities were classified as FASTO originals.
+
+
+
+\subsubsection{Using LLMs}
+
+The LLM-based method analyzed 10 reused ontologies, including the FHIR, SSN, DDO, DMTO/FDTM, OBO biomedical ontologies, OntoFood, and SWRL TO namespaces. The LLM-enhanced method extended the analysis to 12 namespaces by incorporating BFO, additional OBO-based ontologies, and the W3C Time namespace. Table \ref{tab:NamespaceIssues} summarizes the identified reused and local entities for each main namespace. Both methods produced comparable results, although the LLM-enhanced method identified fewer direct classes for DDO and OntoFood and no direct data properties for SSN. Their results were also broadly consistent with the ROBOT analysis, while the LLMs detected significantly more local classes for the DMTO/FDTM namespace. For FHIR and SSN, the LLMs aligned with ROBOT but could not identify any local SSN classes. The main difference appears in the OntoFood namespace. ROBOT classified the entities as local due to the changed namespace, whereas the LLMs identified them as direct classes. 
+
+Overall, both methods reported similar substantive issues. Their main differences concern how findings were grouped and classified. The LLM-enhanced method includes more namespaces and additional categories, such as copied reuse. The LLM-based method identified 19 warnings, whereas the LLM-enhanced method reported 2 errors and 26 warnings. The errors include one unexpected external namespace and namespace extension. The additional findings comprise more missing imports, locally modified reused entities, and unexpected external namespaces. In contrast, the LLM-based method classifies more findings as namespace extensions and provenance issues.
+Similar to ROBOT, no formal imports were detected, but partial reuse or unclear use of external namespaces was inferred. Issues included missing version information and unclear ownership. These deficiencies make maintenance and life-cycle management challenging. In many cases, the reused content was embedded in FASTO and not represented in a machine-readable format, leading to unclear provenance and update paths.
+
+Both methods also detected several namespace mismatches and extensions, as well as locally modified, added, or extended entities. The main identified problem is that reused entities and FASTO-specific extensions are not clearly separated by IRIs, with FASTO entities minted directly in third-party namespaces. These problems were particularly evident in the FHIR, FTDM, OntoFood, and SSN namespaces, but also affected BFO and several OBO ontologies. The global analysis further found that, despite the reported reuse of RxNorm, SNOMED CT, and LOINC, no distinct namespaces containing imported entities from these resources were identified. Moreover, the LLMs identified that a set of copied disease classes was locally modified in FASTO. Also, the LLM-based method reported that the source and version of the reused SNOMED CT standard could not be recovered from FASTO alone.
+
+For DMTO, the analysis confirmed the previously reported discrepancy between the paper and the ontology. The paper claims reuse of DMTO, whereas the ontology uses the FDTM namespace. Similar namespace misuse was identified for SSN, since FASTO mints extensive diabetes-monitoring content into the namespace. The SSN content encoded in the ontology is broader than the reuse described in the paper and includes local-looking classes and individuals. This creates a risk that FASTO-specific sensor and patient concepts will be interpreted as standard SSN content. 
+
+Finally, the LLM-based method reports a self-confidence of 76\%-97\%, with an average of 89\%. The LLM-enhanced ranges from 69\% to 97\%, with an average confidence of 84\%. This may be because the method includes more granular but less certain findings (e.g., namespaces, where the reused ontologies were not provided as input). The results indicate that LLMs can reliably detect namespace misuse and distinguish between local and direct entities with high confidence, even without the ROBOT analysis as input or extensive manual SPARQL querying. Using additional input increases the number of found issues. Still, both methods provide similar suggestions and identify the same underlying problems. 
+
+\begin{table}[t]
+    \caption{Counts of reused ontology elements for the LLM-based and LLM-enhanced methods}
+    \label{tab:NamespaceIssues}
+    \centering
+    \renewcommand{\arraystretch}{1.05}
+
+    \resizebox{\textwidth}{!}{%
+    \begin{tabular}{l*{5}{rr}}
+        \toprule
+        & \multicolumn{2}{c}{DDO}
+        & \multicolumn{2}{c}{DMTO}
+        & \multicolumn{2}{c}{FHIR}
+        & \multicolumn{2}{c}{SSN}
+        & \multicolumn{2}{c}{OntoFood} \\
+        \cline{2-11}
+
+        Count
+        & \multicolumn{1}{c}{Base}
+        & \multicolumn{1}{c}{Enh.}
+        & \multicolumn{1}{c}{Base}
+        & \multicolumn{1}{c}{Enh.}
+        & \multicolumn{1}{c}{Base}
+        & \multicolumn{1}{c}{Enh.}
+        & \multicolumn{1}{c}{Base}
+        & \multicolumn{1}{c}{Enh.}
+        & \multicolumn{1}{c}{Base}
+        & \multicolumn{1}{c}{Enh.} \\
+        \midrule
+
+        Direct classes
+        & 5063 & 5063 & 1218 & 1217 & 19 & 19 & 0 & 0 & 128 & 130 \\
+
+        Direct object properties
+        & 17 & 17 & 17 & 17 & 433 & 433 & 10 & 10 & 0 & 0 \\
+
+        Direct data properties
+        & 5 & 5 & 20 & 20 & 0 & 0 & 5 & 0 & 0 & 0 \\
+
+        Direct individuals
+        & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\
+
+        Local classes
+        & 0& 0 & 1543 & 1543 & 117 & 117 & 76 & 76 & 0 & 0 \\
+
+        Local object properties
+        & 1 & 1 & 86 & 86 & 43 & 43 & 24 & 24 & 0 & 0 \\
+
+        Local data properties
+        & 0 & 0 & 104 & 104 & 5 & 5 & 14 & 14& 0 & 0 \\
+
+        Local individuals
+        & 0 & 0 & 221 & 221 & 14 & 14 & 4 & 4 & 0 & 0\\
+
+        \bottomrule
+    \end{tabular}
+    }
+\end{table}
+
+\subsection{Required Updates for Reused Ontologies}
+
+For the required updates, we directly utilized LLMs to compare between identified local and external FHIR entities. Inputs included FASTO, its verbalized representation, the LLM-based FHIR namespace analysis from task 2, and FHIR R5. Established tools could not reliably extract the required information without first resolving namespace issues and manually separating FASTO-specific from external FHIR entities. Moreover, errors in the existing classification could confuse the mapping strategy.
+
+The analysis reveals that, of 635 terms, 19 can remain unchanged, while 155 are flagged for manual expert review because no clear mapping strategy exists. Overall, the LLM could not provide a migration strategy for 142 terms, including FASTO-owned terms that can be mapped to FHIR R5 concepts but still require expert assessment. For instance, lifestyle concepts such as alcohol intake, smoking status, HbA1c, and height can be modeled using the FHIR Observation resource. Likewise, a wearable sensor platform and a wearable system can be represented via the Device concept. For 71 entities, a separation to a FASTO-owned namespace is suggested. Clear updates were identified for 616 entities, including 414 proposed replacements and 48 terms requiring further review. The most frequent suggestion was a structural change, affecting 291 entities. Candidate FHIR R5 entities were identified for 519 terms, while no direct candidates were found for 116 terms. 20 terms were renamed, usually through minor changes such as capitalization or name corrections. Among the remaining mapping outcomes, 73 entities were merged, 18 were replaced, and one term was removed in FHIR R5. 
+
+The LLM reported an average confidence score of 80\%. At least 310 entities received a high-confidence score above 80\%, while at least 120 entities received a low-confidence score below 60\%. The self-confidence ranges from 45\% to 94\%, indicating that with the given input, the LLM can only enable suggestions to list priorities. However, it cannot be implemented for automatic updating.
+
+
+
+\subsection{Ontology Coverage with New Competency Questions}
+
+The competency-question analysis generated 18 questions focused on hypoglycemia, modern technology, insulin, dietary management, and age-specific care (see Appendix \ref{app_cqs}). Of all questions, 12 are partly covered, and 6 are not covered by FASTO (CQ1, CQ3, CQ5, CQ6, CQ9, CQ14). In addition, 6 questions (CQ9, CQ11, CQ12, CQ15, CQ17, CQ18) were assigned medium priority, whereas the remaining were classified as high priority. The LLM reports an average confidence of 87\%, ranging from 81\% (CQ15) to 92\% (CQ10). In total, 14 of the available 19 sources were utilized, with an average of 3 sources per question \cite{imporvingcare2025, glycemic2024, diabTech2025, Pharma2025, olderadults2025, children2025, Lundemose2025, Sherr2026, Talbo2026, Singh2024, Zeng2025}. 
+
+The principal gaps concerned five areas: 1) Emergency hypoglycemia management: The classification of hypoglycemia severity (CQ1), treatment protocols for conscious individuals experiencing hypoglycemia (CQ4), screening for impaired awareness of hypoglycemia (CQ5), and the incorporation of hypoglycemia fear, psychological burden, and social determinants into treatment decisions (CQ6, CQ17) should be represented. 2) Rescue glucagon: The framework should address the formulation, classification, and prescribing of rescue glucagon (CQ2, CQ3). 3) Advanced diabetes technology: FASTO should represent modern diabetes technologies, including continuous glucose monitoring metrics and individualized glycemic targets (CQ7), as well as advanced insulin-delivery systems (e.g., hybrid closed-loop or algorithm-driven delivery systems), their administration mode, and the periodic reassessment of insulin treatment plans (CQ8, CQ9, CQ11, CQ12). 4) Nutrition therapy: Dietary patterns and evidence strength should be represented and linked to outcomes of HbA1c, coefficient of variation, hypoglycemia, insulin dose, and anthropometric measures (CQ18). 5) Age-specific care: Age-wise treatment should be expanded: For children and adolescents, FASTO should represent caregiver skills and preferences, school support, CGM education (CQ13), growth monitoring, age- and development-sensitive glycemic assessment frequency (CQ14), and transition to adult care (CQ15). For older adults, geriatric conditions and syndromes should impact individualized goals and treatment (CQ16).
+
+The LLM could identify missing concepts with high self-reported confidence using recent guidelines, literature, and the ontology. Moreover, the evidence, covered concepts, and missing or suggested entities are provided to reduce manual effort and enable continuous tracking of missing entities. However, the user still has to verify the content and review the papers and ontology for correctness. 
+
+Finally, the LLM analyzed whether FHIR R5 already covers the newly generated CQs. The results show that most concepts are only partially covered at the conceptual data representation level. For instance, Adverse events, Observation, Care Plan, and Condition are usable concepts, but the exact differentiation of hypoglycemia severity is not represented. Similarly, caregivers, diabetes-specific metrics and goals, or pediatric diabetes-specific knowledge are not directly covered. Hence, the FHIR concepts should be reused and instantiated at the diabetes level, adding new axioms and relationships. 
+
+
+\section{Discussion}
+\label{sec:dis}
+
+We evaluated the quality of FASTO, a biomedical ontology, using LLMs across four tasks and demonstrated that LLMs can be used effectively for ontology evaluation and maintenance when appropriate input data is provided. 
+
+For the first task, focusing on general flaw analysis and pitfall identification, conventional tools were easy to use and generally reliable. However, their performance is constrained by predefined catalogs of design principles and pitfalls. Notably, although the original FASTO publication reported that no issues had been identified using established evaluation tools \cite{ElSappagh2019_FASTO}, the present analysis detected 27 issues with OOPS! and ROBOT. LLMs could identify several ontology-design problems with high self-reported confidence, and the LLM-enhanced method even provided additional flaws to the reports of established tools. Moreover, the LLMs can produce transparent outcomes by providing understandable supporting evidence and recommendations. Hence, these results can be used for an initial, user-oriented assessment of ontology quality. Conclusively, the results reveal substantial problems in FASTO that were not reported in the original publication. These include inconsistencies in modeling patterns, type mismatches, and incorrect ontology imports, while the LLM focused more on namespace violations, ontology punning, and inconsistencies in reused ontologies. The second task analyzed the namespace issues and highlighted entities requiring correction. Both LLM approaches produced results comparable to those of the conventional analysis and identified a larger number of local classes minted under external namespaces. The most substantial problems concerned the misuse of namespaces associated with the FHIR and SSN ontologies. In the third task, the LLM was used to identify entities requiring revision or replacement. Its performance was less reliable, with LLM-reported confidence scores of 45\%-94\%. Although the model expressed high self-confidence in many recommendations and successfully detected several flaws, it also recommended manual or additional expert review for a substantial proportion of the evaluated entities. Nevertheless, the LLM identified significant misuse of FASTO-defined entities in the FHIR namespace and recommended replacing them with their corresponding FHIR R5 entities. This finding indicates that several concepts represented independently in FASTO have subsequently been incorporated into FHIR. The generated recommendations and prioritized list of entities provide a useful overview for ontology maintenance and can support the planning of a systematic mapping and migration strategy. Still, the results require manual validation. Hence, the analysis of task 3 is insufficient for an automated agentic workflow. The results may also have been influenced by the ontology issues identified in the previous tasks. Therefore, task 3 should be conducted using an error-free ontology to assess whether LLM-based automatic updates of outdated entities are feasible. Task 4 focused on generating CQs. When supplied with the ontology, the current guideline publication, existing CQs, and additional scientific literature, the LLM identified conceptual and domain knowledge gaps. For each question, sufficient information and evidence were provided with high self-reported confidence. However, the restriction to generate at most 20 CQs may lead to several compound rather than atomic questions, which increases the likelihood of partially covered classification. 
+
+These findings support the development of multi-agent systems for continuous ontology evaluation and maintenance. In such systems, individual agents could be assigned specialized responsibilities and operate continuously on an applied ontology, with proposed modifications validated through expert or user agreement, as also proposed by Lippolis et al. \cite{Lippolis2025}.
+In particular, the first and second tasks are suitable for semi-agent-based evaluation and suggestions. Given sufficient context, substantial issues were detected, comparable to those of conventional tools, while requiring less manual effort and producing more accessible explanations. However, their actual correction would still require experts. Task 4 could be reliably implemented into an agentic workflow, assessing state-of-the-art domain knowledge from literature, proposing new concepts, and establishing updated evaluation baselines against which the ontology could be tested. This would substantially improve the ontology's timeliness. Next steps should investigate whether implementing the autonomous concept is feasible for agents or whether the proposed tasks remain only decision-support tools. 
+
+Overall, FASTO contains a substantial number of issues, requiring systematic correction. The ontology should be remapped to the most recent, appropriate version of FHIR, and an interface should be established to support continuous updates, version monitoring, and proper ontology import practices. Furthermore, FASTO should be extended to reflect current knowledge and clinical practice in diabetes and hypoglycemia management. It should distinguish symptomatic from asymptomatic events and differentiate between clinically relevant severity levels. The representation of treatment plans should also be revised to support age- and lifestyle-specific individualization. Moreover, modern diabetes technology tools should be incorporated. FASTO provides a relevant foundation, but it requires extensive revision and is outdated for current use. 
+
+The main limitations of this study are its reliance on ChatGPT rather than independent LLMs and the absence of gold-standard comparisons, as detailed in Appendix \ref{app_lim}. Future work should validate our findings using quantitative and qualitative metrics. Moreover, the prompts should be repeatedly run to validate reliability and consistency. Evaluations should also compare multiple LLMs, including local models, to improve reproducibility and provide model-agnostic templates. Then, FASTO should be systematically revised and validated with the previous and new competency questions. 
+
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+This study assessed the quality of FASTO, a biomedical ontology representing type 1 diabetes management, across four tasks: identifying 1) general ontology design flaws and pitfalls, 2) issues in reused ontologies and namespaces, 3) outdated terms and entities in the FHIR namespace, and 4) conceptual gaps and missing representations of current domain knowledge. Common ontology design issues and namespace misuse were evaluated using established tools within the Semantic Web Community, such as OOPS! and ROBOT, and compared with LLM-based JSON schema restricted zero-shot prompting. The LLM approaches provide reliable analysis comparable to that of established tools, while incorporating tool outputs enabled the detection of additional pitfalls not detected by OOPS! or ROBOT, as well as further cases of namespace misuse. Using FASTO alone, the LLM-based method yielded results consistent with those of established tools, with high self-reported confidence, but could not detect all pitfalls. Outdated terms and new competency questions were identified without introducing tool outputs. While task 3 produced useful recommendations, its results were less reliable. Task 4 demonstrated high self-reported confidence in its findings and promising potential for integration into a continuous agentic workflow. This study shows that LLMs can improve ontology validation, life-cycle management, and timeliness.
+
+\begin{acknowledgments}
+  We acknowledge El-Sappagh et al. for providing the first version of a T1D management ontology. 
+\end{acknowledgments}
+
+%% The declaration on generative AI comes in effect
+%% in Janary 2025. See also
+%% https://ceur-ws.org/GenAI/Policy.html
+\section*{Declaration on Generative AI}
+
+The author(s) have used ChatGPT and Grammarly for language improvement and for ontology evaluation. After using these tools, the author reviewed and edited the content as needed and takes full responsibility for the publication’s content.
+\newline
+
+\newpage
+%%
+%% Define the bibliography file to be used
+\bibliography{sample-ceur}
+
+%%
+%% If your work has an appendix, this is the place to put it.
+\newpage
+\appendix
+
+\section{Reused Ontologies of FASTO}
+\label{app_reusedont}
+
+\begin{table}[ht]
+\centering
+\caption{Reused Ontologies and Standards by FASTO}
+\begin{tabular}{lll}
+\toprule
+Ontology abbreviation & Ontology name & Version \\
+\midrule
+DDO      & Diabetes Diagnosis Ontology & version 1 \\
+FMTO (extended version of DMTO) & Diabetes Management Ontology & not reported  \\
+RxNorm & RxNorm & not reported \\
+SNOMED CT & Systematized Nomenclature of Medicine-Clinical Terms & not reported  \\
+LOINC    & Logical Observation Identifiers Names and Codes &  not reported \\
+DDI      & Drug-Drug Interaction Ontology & not reported  \\
+OntoFood & OntoFood & version 1.0 \\
+DINTO    & Drug-Drug Interactions Ontology & not reported  \\
+SMASH    & Semantic Mining of Activity, Social, and Health data  &  not reported \\
+SWE & Sensor Web Enablement & not reported \\
+SWRL TO & SWRL Temporal Ontology  & version 3.3 \\
+SmartBAN  & Smart Body Area Network & not reported  \\
+FHIR & Fast Healthcare Interoperability Resources & STU 3 \\
+SSN   & Semantic Sensor Network & not reported  \\
+BFO & Basic Formal Ontology & version 2.0 \\
+HL7   & Health Level Seven & version 2 \\
+VSO  & Vitals Signs Ontology & not reported \\
+OAE & Ontology of Adverse Events  & not reported \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\section{ChatGPT Settings}
+\label{app_gpt}
+
+This study used the ChatGPT interface with the GPT 5.5 High model to retain the entire ontology in a single prompt. Each prompt was submitted to the LLM once. Each chat was started with the instruction that no memory or information from previous chats can be used. Regarding the initial ChatGPT user settings, the base style and tone were set to professional, with the characteristic style adjusted to be less warm and less enthusiastic. No role was selected in the settings. Memory was disabled for personalization, and reference chat history was also disabled for record mode. 
+
+
+\section{Competency Questions Generated by Task 4} 
+\label{app_cqs}
+\begin{enumerate}
+\item Can FASTO distinguish hypoglycemia severity levels, especially level 2 and level 3 events, and use those levels to identify when a diabetes treatment plan should be reevaluated?
+\item For patients taking insulin or otherwise at high risk for hypoglycemia, can FASTO represent that glucagon should be prescribed and that family members, caregivers, school personnel, or other support persons should be trained to administer it?
+\item Can FASTO classify rescue glucagon formulations by preparation burden and route, such as non-reconstituted glucagon nasal powder, prefilled pen or syringe, dasiglucagon, and powdered glucagon requiring diluent?
+\item Can FASTO represent the initial treatment protocol for conscious hypoglycemia: fast-acting glucose or carbohydrate, avoidance of high-fat or high-protein foods for initial treatment, glucose recheck after approximately 15 minutes, and repeated treatment if hypoglycemia persists?
+\item Can FASTO represent impaired awareness of hypoglycemia, including screening by validated single-question or multi-item tools such as Pedersen-Bjergaard, Gold, Clarke, or HypoA-Q, and link the result to hypoglycemia risk?
+\item Can FASTO represent fear of hypoglycemia as a psychosocial barrier to achieving glycemic targets and well-being, including a screening question and association with anxiety, depression, hypoglycemia confidence, and HbA1c outcomes?
+\item Can FASTO represent continuous glucose monitoring metrics such as time in range, time below range, time above range, glucose management indicator, coefficient of variation, and mean glucose, and relate those metrics to individualized glycemic goals?
+\item Can FASTO classify diabetes technology into BGM, CGM, insulin pump or continuous subcutaneous insulin infusion, connected insulin pens, and automated insulin delivery systems, including the relation by which AID uses CGM-informed algorithms to modulate insulin delivery?
+\item Can FASTO represent advanced hybrid closed-loop system use and its real-world outcome profile, including TIR/TBR changes, severe hypoglycemia, ketoacidosis, skin/adhesive problems, practical barriers, and treatment satisfaction?
+\item Can FASTO model mealtime insulin adjustment using carbohydrate intake together with fat and protein intake, concurrent glycemia, glycemic trends, sick-day management, and anticipated physical activity?
+\item Can FASTO distinguish insulin-delivery treatment modalities for adults with type 1 diabetes, including continuous subcutaneous insulin infusion, multiple daily injections of basal and prandial insulin, inhaled insulin, and the distinction between insulin analogs and human insulin?
+\item Can FASTO determine whether an insulin treatment plan has been reevaluated within a recommended interval, such as every 3 to 6 months, and record the factors used to adjust the plan to individualized glycemic goals?
+\item For children and adolescents with type 1 diabetes whose diabetes is partly or wholly managed by someone else, can FASTO link device selection, CGM education, glucagon preparedness, and learning plans to caregiver skills and preferences?
+\item Can FASTO represent age- and development-sensitive glycemic assessment frequency, including more frequent assessment during rapid growth and development in children and adolescents and individualized targets for older adults?
+\item Can FASTO represent transition planning from pediatric to adult diabetes care, including readiness, transfer timing, and continuity of diabetes-management responsibilities?
+\item For older adults with diabetes, can FASTO represent geriatric syndromes and related risks—such as cognitive impairment, depression, falls, frailty, persistent pain, urinary incontinence, hypoglycemia, and polypharmacy—and use them to individualize goals and therapeutic approaches?
+\item Can FASTO represent social determinants of health and treatment-burden factors—including financial considerations, food insecurity, support systems, individual values, and preferences—as inputs to treatment decisions and hypoglycemia-risk mitigation?
+\item Can FASTO represent dietary patterns and evidence strength for type 1 diabetes management—such as high-fiber diets and carbohydrate-restricted diets—and link them to outcomes including HbA1c, TIR, coefficient of variation, hypoglycemia, insulin dose, and anthropometric measures?
+\end{enumerate}
+
+
+
+\section{Study Limitations}
+\label{app_lim}
+
+We provided an initial study addressing ontology quality and timeliness assessment within a ChatGPT workflow, showing that the LLM can support ontology maintenance semi-automatically. To provide a workflow that can responsibly guide ontology updates and corrections, a proper validation against independent expert gold standards that yield quantitative metrics, such as precision and recall, is required. 
+
+A further limitation of this study is that the ChatGPT interface is not an independent LLM model but rather an extended agentic and tool-based system. Also, its file processing and platform-level behavior may be inconsistent, affecting the output. Instructing the model not to use memory and disabling memory in the settings may not isolate memory influence. Moreover, ChatGPT does not enable exact reproducibility because inference-level parameters are not exposed, and model parameters cannot be modified (e.g., temperature, random seed, token allocation, and consumption). Consequently, API based or locally deployable LLMs (e.g., Llama 3.3 70b) should be evaluated. The prompts should also be repeatedly run to validate reliability and consistency. Future work should also focus on calibrated uncertainty estimates and a mechanism to detect false mappings or hallucinations. In addition, LLM output was restricted to a JSON schema to increase consistency and prevent hallucination. However, while structured outputs facilitate reproducible data extraction, format constraints may limit LLM performance, especially in reasoning \cite{tam-etal-2024-speak}. Hence, future work should conduct ablation studies and explore multiple output structures. Finally, the workflow should be tested with various ontologies across diverse domains. 
+
+\end{document}
+
+%%
+%% End of file
