@@ -146,7 +146,7 @@ This section reports FASTO, the established tools used, and the prompt technique
 
 We analyze the quality of the FASTO ontology, which was created to improve a clinical decision support system for the management of T1D. T1D is an autoimmune disease, requiring lifelong insulin therapy and glucose management to avoid severe events of high (hyperglycemia) and low (hypoglycemia) blood glucose levels, which are impacted by comorbidities and medications \cite{elsayed_2_2023, ElSappagh2019_FASTO}. Thus, personalized insulin injections and therapies should be provided based on a patient's context and lifestyle, rather than relying solely on blood glucose levels \cite{Cinar2026Twins}. The authors combine the analysis of wearables, EHRs, and log data, grounded in ontology knowledge, to automate monitoring and decision support and recommend customized treatment plans. FASTO incorporates 9577 classes, 658 object properties, 164 data properties, 460 individuals, and 140 SWRL rules \cite{ElSappagh2019_FASTO}. 
 
-FASTO is an OWL 2 ontology that is based on BFO 2.0 as its upper-level foundation \cite{ElSappagh2019_FASTO}. FASTO reused standard ontologies and terminology to comply with OBO and medical standards. For instance, the HL7 FHIR standard for data storage, communication, and knowledge representation enables interoperability between different data inputs. From the FHIR model, basic clinical content, including medications, care plans, and observations, was extracted. The medical terms were then encoded with standard medical terminologies (e.g., SNOMED CT). They also implemented knowledge of clinical practice guidelines as OWL 2 axioms and SWRL rules. Previously developed ontologies for type 2 diabetes were reused to define elements required to represent T1D treatment (e.g., diabetes diagnosis (DDO) and treatment (DMTO)) \cite{ElSappagh2019_FASTO}. The DDO also reused standard ontologies, including DOID, the ontology of glucose metabolism disorder (OGMD), and the symptom ontology (SYMP) \cite{ElSappagh2016_DDO}. Further reused ontologies are listed in Appendix \ref{app_reusedont}. Additional T1D treatment knowledge was incorporated as relations, properties, axioms, and SWRL rules. To represent wearable data, each patient has a wireless body area network (WBAN). From the SSN ontology, relevant classes were identified and mapped to BFO universals. The temporal dimension of WBANs was modeled using the SWRL Temporal Ontology (SWRL TO), while SSN was extended with knowledge from the SmartBAN ontology. Then, data integration relied on the SSN and vital-sign ontologies. SSN is a general OWL 2-based sensor ontology and uses the Sensor Web Enablement (SWE) standard \cite{ElSappagh2019_FASTO}. 
+FASTO is an OWL 2 ontology that is based on BFO 2.0 as its upper-level foundation \cite{ElSappagh2019_FASTO}. FASTO reused standard ontologies and terminology to comply with OBO and medical standards. For instance, the HL7 FHIR standard for data storage, communication, and knowledge representation enables interoperability between different data inputs. From the FHIR model, basic clinical content, including medications, care plans, and observations, was extracted. The medical terms were then encoded with standard medical terminologies (e.g., SNOMED CT). They also implemented knowledge of clinical practice guidelines as OWL 2 axioms and SWRL rules. Previously developed ontologies for type 2 diabetes were reused to define elements required to represent T1D treatment (e.g., diabetes diagnosis (DDO) and treatment (DMTO)) \cite{ElSappagh2019_FASTO}. The DDO also reused standard ontologies, including DOID, the ontology of glucose metabolism disorder (OGMD), and the symptom ontology (SYMP) \cite{ElSappagh2016_DDO}. Further reused ontologies are listed in the supplementary files (SF). Additional T1D treatment knowledge was incorporated as relations, properties, axioms, and SWRL rules. To represent wearable data, each patient has a wireless body area network (WBAN). From the SSN ontology, relevant classes were identified and mapped to BFO universals. The temporal dimension of WBANs was modeled using the SWRL Temporal Ontology (SWRL TO), while SSN was extended with knowledge from the SmartBAN ontology. Then, data integration relied on the SSN and vital-sign ontologies. SSN is a general OWL 2-based sensor ontology and uses the Sensor Web Enablement (SWE) standard \cite{ElSappagh2019_FASTO}. 
 
 
 \subsection{Established Tools}
@@ -156,7 +156,7 @@ For the quality assessment, the Protégé reasoner was first leveraged to inspec
 \subsection{LLM Use and Prompt Strategies}
 
 Following related work, we first converted the ontology to an .owl file \cite{Sowiski2022}. Then, it was translated into a structured language using the verbalizer of Minitour \cite{zaitoun2024_NLfromOWL}. We used non-interactive zero-shot prompting with a fixed JSON output schema to ensure comparable model outputs. The prompt and JSON templates were created with the assistance of ChatGPT, giving a full task description, intended analysis, and outcome requirements. The prompts were then reviewed, tested, and refined by the authors. To mitigate overfitting, refinements targeted general failures rather than FASTO-specific content (e.g., evidence verification or output grouping).
-The specific prompts and results of the ontology evaluation can be found in \href{https://github.com/Beyza-Cinar/LLM_Based_Ontology_Evaluation}{https://github.com/Beyza-Cinar/LLM\_Based\_Ontology\_Evaluation}. Because FASTO reuses several large standard ontologies, it exceeded the capacity of local LLMs (e.g., Llama 3.1 8b). To retain the complete ontology in a single prompt, the ChatGPT interface with GPT 5.5 High (Thinking Extended) was used. Each prompt started in a new chat with the instruction that no knowledge from memory or previous chats is allowed to be used. All tasks were performed between 19 and 24 July 2026. Further insights on the ChatGPT settings are provided in Appendix \ref{app_gpt}. 
+The specific prompts, results of the ontology evaluation, CQs, and further supplementary files can be found in \href{https://github.com/Beyza-Cinar/LLM_Based_Ontology_Evaluation}{https://github.com/Beyza-Cinar/LLM\_Based\_Ontology\_Evaluation}. Because FASTO reuses several large standard ontologies, it exceeded the capacity of local LLMs (e.g., Llama 3.1 8b). To retain the complete ontology in a single prompt, the ChatGPT interface with GPT 5.5 High (Thinking Extended) was used. Each prompt started in a new chat with the instruction that no knowledge from memory or previous chats is allowed to be used. All tasks were performed between 19 and 24 July 2026. Further insights on the ChatGPT settings are provided in the SF. 
 
 For the first task, the ontology (\href{https://bioportal.bioontology.org/ontologies/FASTO}{https://bioportal.bioontology.org/ontologies/FASTO}) and verbalizer were provided as evidence. The second task also incorporated the paper describing the FASTO ontology \cite{ElSappagh2019_FASTO}, as well as the ontology files of FHIR Release 3 (R3) (\href{https://www.hl7.org/fhir/STU3/rdf.html}{https://www.hl7.org/fhir/STU3/rdf.html}), SSN v3 (\href{https://www.w3.org/TR/vocab-ssn/}{https://www.w3.org/TR/vocab-ssn/}), DMTO (\href{https://bioportal.bioontology.org/ontologies/DMTO}{https://bioportal.bioontology.org/ontologies/DMTO}), and OntoFood (\href{https://bioportal.bioontology.org/ontologies/OF}{https://bioportal.bioontology.org/ontologies/OF}). For the third task, the FASTO ontology, the FASTO paper, the analysis on the FHIR namespace of task 2 using the LLM-based method, and FHIR R5 (\href{https://hl7.org/fhir/R5/rdf.html} {https://hl7.org/fhir/R5/rdf.html}) were used. The CQs were generated given a set of 15 papers \cite{obesity2025, diabTech2025, preventionDelay2025, children2025, revision2025, olderadults2025, glycemicGoals2025, imporvingcare2025} that were selected after abstract screening using the keyword combination: "type 1 diabetes" AND ("treatment" OR "management") AND ("guideline" OR "standard" OR "update"). In addition, a search on hypoglycemia was conducted with the string: "type 1 diabetes" AND "hypoglycemia" AND ("guidelines" OR "treatment"). Both searches were restricted to Open Access publications published since 2024 \cite{glycemic2024, Sherr2026, Talbo2026, Singh2024, Lundemose2025, Zeng2025}. Also, guidelines from the Diabetes Journals were provided (\href{https://diabetesjournals.org/care/issue/49/Supplement_1}{https://diabetesjournals.org/care/issue/49/Supplement\_1}). Finally, the links used by FASTO to extract relevant information on diabetes treatment and guidelines were given \cite{ElSappagh2019_FASTO}, in addition to the ontology, the paper describing FASTO, and previous CQs. 
 
@@ -424,7 +424,7 @@ The LLM reported an average confidence score of 80\%. At least 310 entities rece
 
 \subsection{Ontology Coverage with New Competency Questions}
 
-The competency-question analysis generated 18 questions focused on hypoglycemia, modern technology, insulin, dietary management, and age-specific care (see Appendix \ref{app_cqs}). Of all questions, 12 are partly covered, and 6 are not covered by FASTO (CQ1, CQ3, CQ5, CQ6, CQ9, CQ14). In addition, 6 questions (CQ9, CQ11, CQ12, CQ15, CQ17, CQ18) were assigned medium priority, whereas the remaining were classified as high priority. The LLM reports an average confidence of 87\%, ranging from 81\% (CQ15) to 92\% (CQ10). In total, 14 of the available 19 sources were utilized, with an average of 3 sources per question \cite{imporvingcare2025, glycemic2024, diabTech2025, Pharma2025, olderadults2025, children2025, Lundemose2025, Sherr2026, Talbo2026, Singh2024, Zeng2025}. 
+The competency-question analysis generated 18 questions focused on hypoglycemia, modern technology, insulin, dietary management, and age-specific care (see the SF). Of all questions, 12 are partly covered, and 6 are not covered by FASTO (CQ1, CQ3, CQ5, CQ6, CQ9, CQ14). In addition, 6 questions (CQ9, CQ11, CQ12, CQ15, CQ17, CQ18) were assigned medium priority, whereas the remaining were classified as high priority. The LLM reports an average confidence of 87\%, ranging from 81\% (CQ15) to 92\% (CQ10). In total, 14 of the available 19 sources were utilized, with an average of 3 sources per question \cite{imporvingcare2025, glycemic2024, diabTech2025, Pharma2025, olderadults2025, children2025, Lundemose2025, Sherr2026, Talbo2026, Singh2024, Zeng2025}. 
 
 The principal gaps concerned five areas: 1) Emergency hypoglycemia management: The classification of hypoglycemia severity (CQ1), treatment protocols for conscious individuals experiencing hypoglycemia (CQ4), screening for impaired awareness of hypoglycemia (CQ5), and the incorporation of hypoglycemia fear, psychological burden, and social determinants into treatment decisions (CQ6, CQ17) should be represented. 2) Rescue glucagon: The framework should address the formulation, classification, and prescribing of rescue glucagon (CQ2, CQ3). 3) Advanced diabetes technology: FASTO should represent modern diabetes technologies, including continuous glucose monitoring metrics and individualized glycemic targets (CQ7), as well as advanced insulin-delivery systems (e.g., hybrid closed-loop or algorithm-driven delivery systems), their administration mode, and the periodic reassessment of insulin treatment plans (CQ8, CQ9, CQ11, CQ12). 4) Nutrition therapy: Dietary patterns and evidence strength should be represented and linked to outcomes of HbA1c, coefficient of variation, hypoglycemia, insulin dose, and anthropometric measures (CQ18). 5) Age-specific care: Age-wise treatment should be expanded: For children and adolescents, FASTO should represent caregiver skills and preferences, school support, CGM education (CQ13), growth monitoring, age- and development-sensitive glycemic assessment frequency (CQ14), and transition to adult care (CQ15). For older adults, geriatric conditions and syndromes should impact individualized goals and treatment (CQ16).
 
@@ -445,7 +445,7 @@ In particular, the first and second tasks are suitable for semi-agent-based eval
 
 Overall, FASTO contains a substantial number of issues, requiring systematic correction. The ontology should be remapped to the most recent, appropriate version of FHIR, and an interface should be established to support continuous updates, version monitoring, and proper ontology import practices. Furthermore, FASTO should be extended to reflect current knowledge and clinical practice in diabetes and hypoglycemia management. It should distinguish symptomatic from asymptomatic events and differentiate between clinically relevant severity levels. The representation of treatment plans should also be revised to support age- and lifestyle-specific individualization. Moreover, modern diabetes technology tools should be incorporated. FASTO provides a relevant foundation, but it requires extensive revision and is outdated for current use. 
 
-The main limitations of this study are its reliance on ChatGPT rather than independent LLMs and the absence of gold-standard comparisons, as detailed in Appendix \ref{app_lim}. Future work should validate our findings using quantitative and qualitative metrics. Moreover, the prompts should be repeatedly run to validate reliability and consistency. Evaluations should also compare multiple LLMs, including local models, to improve reproducibility and provide model-agnostic templates. Then, FASTO should be systematically revised and validated with the previous and new competency questions. 
+The main limitations of this study are its reliance on ChatGPT rather than independent LLMs and the absence of gold-standard comparisons, as detailed in the SF. Future work should validate our findings using quantitative and qualitative metrics. Moreover, the prompts should be repeatedly run to validate reliability and consistency. Evaluations should also compare multiple LLMs, including local models, to improve reproducibility and provide model-agnostic templates. Then, FASTO should be systematically revised and validated with the previous and new competency questions. 
 
 
 \section{Conclusion}
@@ -472,79 +472,7 @@ The author(s) have used ChatGPT and Grammarly for language improvement and for o
 
 %%
 %% If your work has an appendix, this is the place to put it.
-\newpage
-\appendix
 
-\section{Reused Ontologies of FASTO}
-\label{app_reusedont}
-
-\begin{table}[ht]
-\centering
-\caption{Reused Ontologies and Standards by FASTO}
-\begin{tabular}{lll}
-\toprule
-Ontology abbreviation & Ontology name & Version \\
-\midrule
-DDO      & Diabetes Diagnosis Ontology & version 1 \\
-FMTO (extended version of DMTO) & Diabetes Management Ontology & not reported  \\
-RxNorm & RxNorm & not reported \\
-SNOMED CT & Systematized Nomenclature of Medicine-Clinical Terms & not reported  \\
-LOINC    & Logical Observation Identifiers Names and Codes &  not reported \\
-DDI      & Drug-Drug Interaction Ontology & not reported  \\
-OntoFood & OntoFood & version 1.0 \\
-DINTO    & Drug-Drug Interactions Ontology & not reported  \\
-SMASH    & Semantic Mining of Activity, Social, and Health data  &  not reported \\
-SWE & Sensor Web Enablement & not reported \\
-SWRL TO & SWRL Temporal Ontology  & version 3.3 \\
-SmartBAN  & Smart Body Area Network & not reported  \\
-FHIR & Fast Healthcare Interoperability Resources & STU 3 \\
-SSN   & Semantic Sensor Network & not reported  \\
-BFO & Basic Formal Ontology & version 2.0 \\
-HL7   & Health Level Seven & version 2 \\
-VSO  & Vitals Signs Ontology & not reported \\
-OAE & Ontology of Adverse Events  & not reported \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-
-\section{ChatGPT Settings}
-\label{app_gpt}
-
-This study used the ChatGPT interface with the GPT 5.5 High model to retain the entire ontology in a single prompt. Each prompt was submitted to the LLM once. Each chat was started with the instruction that no memory or information from previous chats can be used. Regarding the initial ChatGPT user settings, the base style and tone were set to professional, with the characteristic style adjusted to be less warm and less enthusiastic. No role was selected in the settings. Memory was disabled for personalization, and reference chat history was also disabled for record mode. 
-
-
-\section{Competency Questions Generated by Task 4} 
-\label{app_cqs}
-\begin{enumerate}
-\item Can FASTO distinguish hypoglycemia severity levels, especially level 2 and level 3 events, and use those levels to identify when a diabetes treatment plan should be reevaluated?
-\item For patients taking insulin or otherwise at high risk for hypoglycemia, can FASTO represent that glucagon should be prescribed and that family members, caregivers, school personnel, or other support persons should be trained to administer it?
-\item Can FASTO classify rescue glucagon formulations by preparation burden and route, such as non-reconstituted glucagon nasal powder, prefilled pen or syringe, dasiglucagon, and powdered glucagon requiring diluent?
-\item Can FASTO represent the initial treatment protocol for conscious hypoglycemia: fast-acting glucose or carbohydrate, avoidance of high-fat or high-protein foods for initial treatment, glucose recheck after approximately 15 minutes, and repeated treatment if hypoglycemia persists?
-\item Can FASTO represent impaired awareness of hypoglycemia, including screening by validated single-question or multi-item tools such as Pedersen-Bjergaard, Gold, Clarke, or HypoA-Q, and link the result to hypoglycemia risk?
-\item Can FASTO represent fear of hypoglycemia as a psychosocial barrier to achieving glycemic targets and well-being, including a screening question and association with anxiety, depression, hypoglycemia confidence, and HbA1c outcomes?
-\item Can FASTO represent continuous glucose monitoring metrics such as time in range, time below range, time above range, glucose management indicator, coefficient of variation, and mean glucose, and relate those metrics to individualized glycemic goals?
-\item Can FASTO classify diabetes technology into BGM, CGM, insulin pump or continuous subcutaneous insulin infusion, connected insulin pens, and automated insulin delivery systems, including the relation by which AID uses CGM-informed algorithms to modulate insulin delivery?
-\item Can FASTO represent advanced hybrid closed-loop system use and its real-world outcome profile, including TIR/TBR changes, severe hypoglycemia, ketoacidosis, skin/adhesive problems, practical barriers, and treatment satisfaction?
-\item Can FASTO model mealtime insulin adjustment using carbohydrate intake together with fat and protein intake, concurrent glycemia, glycemic trends, sick-day management, and anticipated physical activity?
-\item Can FASTO distinguish insulin-delivery treatment modalities for adults with type 1 diabetes, including continuous subcutaneous insulin infusion, multiple daily injections of basal and prandial insulin, inhaled insulin, and the distinction between insulin analogs and human insulin?
-\item Can FASTO determine whether an insulin treatment plan has been reevaluated within a recommended interval, such as every 3 to 6 months, and record the factors used to adjust the plan to individualized glycemic goals?
-\item For children and adolescents with type 1 diabetes whose diabetes is partly or wholly managed by someone else, can FASTO link device selection, CGM education, glucagon preparedness, and learning plans to caregiver skills and preferences?
-\item Can FASTO represent age- and development-sensitive glycemic assessment frequency, including more frequent assessment during rapid growth and development in children and adolescents and individualized targets for older adults?
-\item Can FASTO represent transition planning from pediatric to adult diabetes care, including readiness, transfer timing, and continuity of diabetes-management responsibilities?
-\item For older adults with diabetes, can FASTO represent geriatric syndromes and related risks—such as cognitive impairment, depression, falls, frailty, persistent pain, urinary incontinence, hypoglycemia, and polypharmacy—and use them to individualize goals and therapeutic approaches?
-\item Can FASTO represent social determinants of health and treatment-burden factors—including financial considerations, food insecurity, support systems, individual values, and preferences—as inputs to treatment decisions and hypoglycemia-risk mitigation?
-\item Can FASTO represent dietary patterns and evidence strength for type 1 diabetes management—such as high-fiber diets and carbohydrate-restricted diets—and link them to outcomes including HbA1c, TIR, coefficient of variation, hypoglycemia, insulin dose, and anthropometric measures?
-\end{enumerate}
-
-
-
-\section{Study Limitations}
-\label{app_lim}
-
-We provided an initial study addressing ontology quality and timeliness assessment within a ChatGPT workflow, showing that the LLM can support ontology maintenance semi-automatically. To provide a workflow that can responsibly guide ontology updates and corrections, a proper validation against independent expert gold standards that yield quantitative metrics, such as precision and recall, is required. 
-
-A further limitation of this study is that the ChatGPT interface is not an independent LLM model but rather an extended agentic and tool-based system. Also, its file processing and platform-level behavior may be inconsistent, affecting the output. Instructing the model not to use memory and disabling memory in the settings may not isolate memory influence. Moreover, ChatGPT does not enable exact reproducibility because inference-level parameters are not exposed, and model parameters cannot be modified (e.g., temperature, random seed, token allocation, and consumption). Consequently, API based or locally deployable LLMs (e.g., Llama 3.3 70b) should be evaluated. The prompts should also be repeatedly run to validate reliability and consistency. Future work should also focus on calibrated uncertainty estimates and a mechanism to detect false mappings or hallucinations. In addition, LLM output was restricted to a JSON schema to increase consistency and prevent hallucination. However, while structured outputs facilitate reproducible data extraction, format constraints may limit LLM performance, especially in reasoning \cite{tam-etal-2024-speak}. Hence, future work should conduct ablation studies and explore multiple output structures. Finally, the workflow should be tested with various ontologies across diverse domains. 
 
 \end{document}
 
