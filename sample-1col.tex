@@ -34,7 +34,7 @@
 
 %%
 %% This command is for the conference information
-\conference{17th Workshop on Ontology Design and Patterns (WOP 2026), 25th International Semantic Web Conference (ISWC 2026), Oktober 25--29, 2026, Bari, Italy}
+\conference{WOP 2026: 17th Workshop on Ontology Design and Patterns, co-located with ISWC 2026, October 25, 2026, Bari, Italy}
 %%
 %% The "title" command
 \title{Evaluating Ontology Quality and Timeliness with Large Language Models}
@@ -343,7 +343,7 @@ FASTO uses 631 FHIR entities, of which 179 occur only in FASTO, including 117 cl
 
 \subsubsection{Using LLMs}
 
-The LLM-based method analyzed 10 reused ontologies, including the FHIR, SSN, DDO, DMTO/FDTM, OBO biomedical ontologies, OntoFood, and SWRL TO namespaces. The LLM-enhanced method extended the analysis to 12 namespaces by incorporating BFO, additional OBO-based ontologies, and the W3C Time namespace. Table \ref{tab:NamespaceIssues} summarizes the identified reused and local entities for each main namespace. Both methods produced comparable results, although the LLM-enhanced method identified fewer direct classes for DDO and OntoFood and no direct data properties for SSN. Their results were also broadly consistent with the ROBOT analysis, while the LLMs detected significantly more local classes for the DMTO/FDTM namespace. For FHIR and SSN, the LLMs aligned with ROBOT but could not identify any local SSN classes. The main difference appears in the OntoFood namespace. ROBOT classified the entities as local due to the changed namespace, whereas the LLMs identified them as direct classes. 
+The LLM-based method analyzed 10 reused ontologies, including the FHIR, SSN, DDO, DMTO/FDTM, OBO biomedical ontologies, OntoFood, and SWRL TO namespaces. The LLM-enhanced method extended the analysis to 12 namespaces by incorporating BFO, additional OBO-based ontologies, and the W3C Time namespace. Table \ref{tab:NamespaceIssues} summarizes the identified reused and local entities for each main namespace. Both methods produced comparable results, with minimal differences in the DMTO and OntoFood namespaces. Their results were also broadly consistent with the ROBOT analysis. For FHIR and SSN, the LLMs aligned with ROBOT but could not identify any direct SSN classes. The main difference appears in the OntoFood namespace. ROBOT classified the entities as local due to the changed namespace, whereas the LLMs identified them as direct classes. 
 
 Overall, both methods reported similar substantive issues. Their main differences concern how findings were grouped and classified. The LLM-enhanced method includes more namespaces and additional categories, such as copied reuse. The LLM-based method identified 19 warnings, whereas the LLM-enhanced method reported 2 errors and 26 warnings. The errors include one unexpected external namespace and namespace extension. The additional findings comprise more missing imports, locally modified reused entities, and unexpected external namespaces. In contrast, the LLM-based method classifies more findings as namespace extensions and provenance issues.
 Similar to ROBOT, no formal imports were detected, but partial reuse or unclear use of external namespaces was inferred. Issues included missing version information and unclear ownership. These deficiencies make maintenance and life-cycle management challenging. In many cases, the reused content was embedded in FASTO and not represented in a machine-readable format, leading to unclear provenance and update paths.
@@ -390,19 +390,19 @@ Finally, the LLM-based method reports a self-confidence of 76\%-97\%, with an av
         & 17 & 17 & 17 & 17 & 433 & 433 & 10 & 10 & 0 & 0 \\
 
         Direct data properties
-        & 5 & 5 & 20 & 20 & 0 & 0 & 5 & 0 & 0 & 0 \\
+        & 5 & 5 & 20 & 20 & 0 & 0 & 0 & 0 & 0 & 0 \\
 
         Direct individuals
         & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\
 
         Local classes
-        & 0& 0 & 1543 & 1543 & 117 & 117 & 76 & 76 & 0 & 0 \\
+        & 0& 0 & 325 & 326 & 117 & 117 & 76 & 76 & 7 & 5 \\
 
         Local object properties
-        & 1 & 1 & 86 & 86 & 43 & 43 & 24 & 24 & 0 & 0 \\
+        & 1 & 1 & 69 & 69 & 43 & 43 & 24 & 24 & 0 & 0 \\
 
         Local data properties
-        & 0 & 0 & 104 & 104 & 5 & 5 & 14 & 14& 0 & 0 \\
+        & 0 & 0 & 84 & 84 & 5 & 5 & 14 & 14& 0 & 0 \\
 
         Local individuals
         & 0 & 0 & 221 & 221 & 14 & 14 & 4 & 4 & 0 & 0\\
